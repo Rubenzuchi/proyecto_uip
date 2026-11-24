@@ -18,10 +18,12 @@ const ALLOWED_LOCATIONS = [
   'Science Building'
 ];
 
+// no hay base de datos: los objetos viven en un array en memoria. Se pierden al reiniciar el servidor.
+
 // Contador dedicado para evitar colisiones de IDs al borrar elementos
 let nextId = 4;
 
-// Almacén en memoria inicial
+// Almacén en memoria inicial 
 let items = [
   {
     id: 1,
@@ -59,6 +61,7 @@ let items = [
 ];
 
 // Función centralizada de validación del Modelo
+// devuelve un array de errores (vacío si todo está bien)
 function validateItemFields({ title, location, description, status, type }, isPartial = false) {
   const errors = [];
 
@@ -91,9 +94,9 @@ function validateItemFields({ title, location, description, status, type }, isPa
   return errors;
 }
 
-// GET /api/items -> Devuelve todos los objetos
+// GET /api/items -> Devuelve todos los objetos (array completo)
 app.get('/api/items', (req, res) => {
-  res.json(items);
+  res.json(items); 
 });
 
 // POST /api/items -> Crea un nuevo reporte con validación estricta
@@ -130,20 +133,24 @@ app.post('/api/items', (req, res) => {
 
 // PUT /api/items/:id -> Actualización in-context de múltiples atributos (location, category, status, description)
 app.put('/api/items/:id', (req, res) => {
-  const itemId = parseInt(req.params.id, 10);
+  const itemId = parseInt(req.params.id, 10); // localiza el objeto. (10 -> indica base decimal)
   const item = items.find((i) => i.id === itemId);
 
+  // error si no existe
   if (!item) {
     return res.status(404).json({ error: `Item #${itemId} not found.` });
   }
 
+  // extraer datos enviados
   const { title, category, location, description, status, storageSlot } = req.body;
 
+  // validar
   const validationErrors = validateItemFields(
     { title, location, description, status },
     true
   );
 
+  // si hay errores -> error 400
   if (validationErrors.length > 0) {
     return res.status(400).json({
       error: 'Model validation rejected update',
@@ -151,26 +158,30 @@ app.put('/api/items/:id', (req, res) => {
     });
   }
 
-  if (title !== undefined) item.title = title.trim();
+  // "si me enviaron este campo, actualízalo", el resto queda intacto
+  if (title !== undefined) item.title = title.trim(); // .trim() para quitar espacios sobrantes
   if (category !== undefined) item.category = category;
   if (location !== undefined) item.location = location;
   if (description !== undefined) item.description = description.trim();
   if (status !== undefined) item.status = status;
   if (storageSlot !== undefined) item.storageSlot = storageSlot;
 
-  res.json(item);
+  res.json(item); // respuesta
 });
 
 // PUT /api/items/:id/status -> Ruta específica de cambio de estado (compatibilidad)
 app.put('/api/items/:id/status', (req, res) => {
+  // obtener el id y el status
   const itemId = parseInt(req.params.id, 10);
   const { status } = req.body;
 
+  // busca el objeto (404 si no existe)
   const item = items.find((i) => i.id === itemId);
   if (!item) {
     return res.status(404).json({ error: `Item #${itemId} not found.` });
   }
 
+  // validar el estado
   if (!ALLOWED_STATUSES.includes(status)) {
     return res.status(400).json({
       error: 'Invalid status transition',
@@ -178,10 +189,12 @@ app.put('/api/items/:id/status', (req, res) => {
     });
   }
 
+  // actualizar y responder
   item.status = status;
   res.json(item);
 });
 
+// arrancar el servidor
 app.listen(PORT, () => {
   console.log(`Campus Lost & Found API running at http://localhost:${PORT}`);
 });
