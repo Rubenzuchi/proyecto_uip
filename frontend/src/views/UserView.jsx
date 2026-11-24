@@ -1,3 +1,4 @@
+//This file was created by Rubén Granados
 import React, { useState } from 'react';
 
 // Coordenadas porcentuales sobre la imagen del mapa del campus

@@ -1,3 +1,4 @@
+//This file was created by Rubén Granados
 import React from 'react';
 
 export default function AdminView({ items = [], onUpdateItem }) {

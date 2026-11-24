@@ -1,3 +1,4 @@
+//This file was created by Paula Segura
 const express = require('express');
 const cors = require('cors');
 

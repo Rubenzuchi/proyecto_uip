@@ -1,3 +1,4 @@
+//This file was created by Dimitar Lyudmilov
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
