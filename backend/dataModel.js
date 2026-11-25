@@ -8,7 +8,7 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Reglas de validación del dominio (Model constraints)
+// Domain validation rules (Model constraints)
 const ALLOWED_STATUSES = ['Pending', 'Stored', 'Returned', 'Rejected'];
 const ALLOWED_TYPES = ['lost', 'found'];
 const ALLOWED_LOCATIONS = [
@@ -18,12 +18,12 @@ const ALLOWED_LOCATIONS = [
   'Science Building'
 ];
 
-// no hay base de datos: los objetos viven en un array en memoria. Se pierden al reiniciar el servidor.
+// no database: objects live in an in-memory array. They are lost when the server restarts.
 
-// Contador dedicado para evitar colisiones de IDs al borrar elementos
+// Dedicated counter to prevent ID collisions when deleting elements
 let nextId = 4;
 
-// Almacén en memoria inicial 
+// Initial in-memory store 
 let items = [
   {
     id: 1,
@@ -60,8 +60,8 @@ let items = [
   }
 ];
 
-// Función centralizada de validación del Modelo
-// devuelve un array de errores (vacío si todo está bien)
+// Centralized Model validation function
+// returns an array of errors (empty if everything is fine)
 function validateItemFields({ title, location, description, status, type }, isPartial = false) {
   const errors = [];
 
@@ -94,12 +94,12 @@ function validateItemFields({ title, location, description, status, type }, isPa
   return errors;
 }
 
-// GET /api/items -> Devuelve todos los objetos (array completo)
+// GET /api/items -> Returns all objects (complete array)
 app.get('/api/items', (req, res) => {
   res.json(items); 
 });
 
-// POST /api/items -> Crea un nuevo reporte con validación estricta
+// POST /api/items -> Creates a new report with strict validation
 app.post('/api/items', (req, res) => {
   const { title, category, location, description, type, photoUrl } = req.body;
 
@@ -131,26 +131,26 @@ app.post('/api/items', (req, res) => {
   res.status(201).json(newItem);
 });
 
-// PUT /api/items/:id -> Actualización in-context de múltiples atributos (location, category, status, description)
+// PUT /api/items/:id -> In-context update of multiple attributes (location, category, status, description)
 app.put('/api/items/:id', (req, res) => {
-  const itemId = parseInt(req.params.id, 10); // localiza el objeto. (10 -> indica base decimal)
+  const itemId = parseInt(req.params.id, 10); // locates the object. (10 -> indicates decimal base)
   const item = items.find((i) => i.id === itemId);
 
-  // error si no existe
+  // error if it doesn't exist
   if (!item) {
     return res.status(404).json({ error: `Item #${itemId} not found.` });
   }
 
-  // extraer datos enviados
+  // extract sent data
   const { title, category, location, description, status, storageSlot } = req.body;
 
-  // validar
+  // validate
   const validationErrors = validateItemFields(
     { title, location, description, status },
     true
   );
 
-  // si hay errores -> error 400
+  // if there are errors -> 400 error
   if (validationErrors.length > 0) {
     return res.status(400).json({
       error: 'Model validation rejected update',
@@ -158,30 +158,30 @@ app.put('/api/items/:id', (req, res) => {
     });
   }
 
-  // "si me enviaron este campo, actualízalo", el resto queda intacto
-  if (title !== undefined) item.title = title.trim(); // .trim() para quitar espacios sobrantes
+  // "if this field was sent to me, update it", the rest remains intact
+  if (title !== undefined) item.title = title.trim(); // .trim() to remove extra spaces
   if (category !== undefined) item.category = category;
   if (location !== undefined) item.location = location;
   if (description !== undefined) item.description = description.trim();
   if (status !== undefined) item.status = status;
   if (storageSlot !== undefined) item.storageSlot = storageSlot;
 
-  res.json(item); // respuesta
+  res.json(item); // response
 });
 
-// PUT /api/items/:id/status -> Ruta específica de cambio de estado (compatibilidad)
+// PUT /api/items/:id/status -> Specific status change route (compatibility)
 app.put('/api/items/:id/status', (req, res) => {
-  // obtener el id y el status
+  // get the id and the status
   const itemId = parseInt(req.params.id, 10);
   const { status } = req.body;
 
-  // busca el objeto (404 si no existe)
+  // find the object (404 if it doesn't exist)
   const item = items.find((i) => i.id === itemId);
   if (!item) {
     return res.status(404).json({ error: `Item #${itemId} not found.` });
   }
 
-  // validar el estado
+  // validate the status
   if (!ALLOWED_STATUSES.includes(status)) {
     return res.status(400).json({
       error: 'Invalid status transition',
@@ -189,12 +189,12 @@ app.put('/api/items/:id/status', (req, res) => {
     });
   }
 
-  // actualizar y responder
+  // update and respond
   item.status = status;
   res.json(item);
 });
 
-// arrancar el servidor
+// start the server
 app.listen(PORT, () => {
   console.log(`Campus Lost & Found API running at http://localhost:${PORT}`);
 });
